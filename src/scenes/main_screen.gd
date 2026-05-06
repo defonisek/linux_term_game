@@ -81,31 +81,19 @@ func advance_stage():
 				handle_send_mail(stage)
 				current_stage_index += 1
 			"wait_for_chat_read":
-				await handle_wait_for_chat_read()
+				await chat_opened # ждём, пока игрок откроет чат
 				current_stage_index += 1
 			"wait_command":
-				await handle_wait_command(stage)
-				# handle_wait_command сама вызовет advance_stage() при успехе,
-				# поэтому здесь просто return, чтобы не продолжать цикл
-				return
+				# Внутренний цикл: ждём правильную команду
+				await _process_wait_command(stage)
+				# После выхода из _process_wait_command индекс уже увеличен,
+				# поэтому просто переходим к следующей итерации while
+				# (не увеличиваем current_stage_index здесь, это сделано внутри)
 			"minigame":
 				await handle_minigame(stage)
 				current_stage_index += 1
-	# Все этапы пройдены
 	finish_level()
-	var stage = stages[current_stage_index]
-	match stage["type"]:
-		"chat_messages":
-			await show_chat_messages(stage["messages"], stage.get("delays", []))
-			current_stage_index += 1
-			advance_stage()
-		"wait_command":
-			await wait_for_command(stage["command"], stage)
-			# wait_for_command сама увеличит индекс, когда условие выполнено
-		"chat_message":
-			other_screen.add_message(stage["message"])
-			current_stage_index += 1
-			advance_stage()
+
 
 func handle_send_mail(stage: Dictionary) -> void:
 	var messages: Array = stage.get("messages", [])
@@ -129,7 +117,7 @@ func handle_wait_for_chat_read() -> void:
 	# Ждём, пока игрок откроет чат (show_other вызовет chat_opened)
 	await chat_opened
 
-func handle_wait_command(stage: Dictionary) -> void:
+func _process_wait_command(stage: Dictionary) -> void:
 	var required_command: StringName = stage["command"]
 	var on_fail: String = stage.get("on_fail", "retry_message")
 	while true:
@@ -137,32 +125,25 @@ func handle_wait_command(stage: Dictionary) -> void:
 		var cmd_name: StringName = result[0]
 		var argv: PackedStringArray = result[1]
 		var full_command: String = result[2]
-
-		if cmd_name == required_command:
-			terminal.print_on_terminal("Верно!", Color.GREEN)
+		if str(cmd_name) == str(required_command):
 			current_stage_index += 1
-			advance_stage()
 			return
 		else:
 			match on_fail:
 				"minigame":
 					await run_minigame(stage.get("minigame_id", "default"))
-					# После миниигры продолжаем ждать команду
 				"retry_message":
 					var retry_text = stage.get("retry_text", "Неверная команда. Попробуй ещё раз.")
 					other_screen.add_message(retry_text)
 					terminal.set_other_screen_pending(true)
-					# Ожидание продолжается
-				"retry_terminal":
-					terminal.print_on_terminal(stage.get("retry_text", "Неверная команда."), Color.RED)
 				_:
-					terminal.print_on_terminal("Неверная команда.", Color.RED)
+					# Ничего не делаем, просто ждём следующую команду
+					pass
 
 func handle_minigame(stage: Dictionary) -> void:
 	var minigame_id = stage.get("minigame_id", "default")
 	terminal.print_on_terminal("Запущена мини-игра: " + minigame_id, Color.YELLOW)
 	await get_tree().create_timer(2.0).timeout   # имитация
-	terminal.print_on_terminal("Мини-игра завершена. Попробуйте снова.", Color.YELLOW)
 
 func wait_for_command(required_command: String, stage_data: Dictionary) -> void:
 	# Просим игрока переключиться в терминал (можно и принудительно)
