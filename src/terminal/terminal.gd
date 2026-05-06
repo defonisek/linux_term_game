@@ -7,7 +7,6 @@ const GODOT_DEFAULT_FONT_SIZE: int = 16
 @export var default_text_color: Color = Color.WHITE
 @export var prompt_color: Color = Color.GREEN
 @export var primary_prompt_text: String = "player> "
-@export var selection_color: Color = Color(0.2, 0.4, 0.6, 0.5)
 @export var caret_blink_interval: float = 0.5
 
 var caret: TerminalCaret
@@ -28,20 +27,6 @@ var _active_logical_line_idx: int = 0
 var _first_active_display_line_idx: int = 0
 
 var _is_input_locked: bool = false
-
-var _is_selecting: bool = false
-var _selection_anchor_index: Vector2i = Vector2i.ZERO
-var _selection_cursor_index: Vector2i = Vector2i.ZERO
-var _selection_from_index: Vector2i = Vector2i.ZERO
-var _selection_to_index: Vector2i = Vector2i.ZERO
-
-var _paste_queue: Array[String] = []
-var _is_pasting_multiline: bool = false
-
-var _command_history: Array[String] = []
-var _history_index: int = -1
-var _history_temp_input: String = ""
-
 
 var _pending_other_screen: bool = false
 
@@ -93,7 +78,12 @@ func recreate_display_lines_since_last_input_only() -> void:
 
 
 func update_caret_position() -> void:
+	if _first_active_display_line_idx < 0:
+		push_error("Terminal: No active display line. This shouldn't happen.")
+		return
+
 	var caret_display_index_x: int = caret_logical_index_x % max_columns
+	@warning_ignore("integer_division")
 	var caret_relative_display_row: int = floori(caret_logical_index_x / max_columns)
 	var caret_display_index_y: int = _first_active_display_line_idx + caret_relative_display_row
 	var caret_pos_x: float = caret_display_index_x * _font_width
@@ -112,7 +102,6 @@ func update_caret_position() -> void:
 
 func run_command() -> void:
 	var command: String = _build_input_text().strip_edges()
-	_save_to_history(command)
 	_commands.process_command(command)
 
 
@@ -136,41 +125,6 @@ func insert_char_at_caret(
 	if should_update:
 		recreate_display_lines_since_last_input_only()
 
-
-func navigate_history_up() -> void:
-	if _command_history.size() > 0:
-		clear_selection()
-
-		# If the user is not already browsing history, store the current input for later.
-		if _history_index == -1:
-			_history_temp_input = _build_input_text()
-
-		_history_index = clamp(_history_index + 1, 0, _command_history.size() - 1)
-
-		var retrieved_command: String = _command_history[
-			_command_history.size() - 1 - _history_index
-		]
-
-		_clear_input()
-		_insert_text_at_caret(retrieved_command)
-		caret_logical_index_x = get_active_logical_line().length()
-
-
-func navigate_history_down() -> void:
-	if _command_history.size() > 0:
-		clear_selection()
-
-		_history_index = clamp(_history_index - 1, -1, _command_history.size() - 1)
-
-		var retrieved_command: String = ""
-		if _history_index == -1:
-			retrieved_command = _history_temp_input
-		else:
-			retrieved_command = _command_history[_command_history.size() - 1 - _history_index]
-
-		_clear_input()
-		_insert_text_at_caret(retrieved_command)
-		caret_logical_index_x = get_active_logical_line().length()
 
 
 func invoke_autocompletion() -> void:
@@ -224,62 +178,6 @@ func invoke_autocompletion() -> void:
 		caret_logical_index_x = original_caret_pos_x
 		update_caret_position()
 
-
-func clear_selection() -> void:
-	_is_selecting = false
-	_selection_anchor_index = Vector2i.ZERO
-	_selection_cursor_index = Vector2i.ZERO
-	_selection_from_index = Vector2i.ZERO
-	_selection_to_index = Vector2i.ZERO
-	_display_control.queue_redraw()
-
-
-func copy_text() -> void:
-	var selected_text: String = _get_selected_text()
-	if not selected_text.is_empty():
-		DisplayServer.clipboard_set(selected_text)
-
-
-func paste_text() -> void:
-	if _is_input_locked:
-		return
-
-	var clipboard_text: String = DisplayServer.clipboard_get()
-	if clipboard_text == "":
-		return
-
-	var lines: PackedStringArray = clipboard_text \
-		.replace("\r\n", "\n") \
-		.replace("\r", "\n") \
-		.split("\n")
-
-	# Populate '_paste_queue' while removing empty lines.
-	_paste_queue.clear()
-	for line: String in lines:
-		var trimmed: String = line.strip_edges()
-		if trimmed != "":
-			_paste_queue.append(line)
-
-	if _paste_queue.is_empty():
-		# Nothing to paste.
-		pass
-	elif _paste_queue.size() == 1:
-		# Single-line paste: insert at the caret.
-		_insert_text_at_caret(_paste_queue[0])
-	else:
-		# Multi-line paste.
-		# The approach below is to treat each line as a command and execute them sequentially.
-		# One of the other approaches could be to insert all the lines in the current input and
-		# don't execute anything until the user presses Enter. Etc.
-		clear_selection()
-		# Clear the current input, keeping the current prompt as it is. This is especially important
-		# if the prompt contains dynamic information like the current time.
-		_clear_input()
-
-		_is_pasting_multiline = true
-		_lock_input()
-		_run_next_pasted_command(true)
-
 func get_font() -> Font:
 	return _font
 
@@ -324,7 +222,6 @@ func _create_new_logical_line() -> void:
 func _create_new_line_with_prompt() -> void:
 	_create_new_logical_line()
 	_write_prompt()
-	_history_index = -1
 	recreate_display_lines_since_last_input_only()
 
 
@@ -361,14 +258,6 @@ func _clear_input() -> void:
 	caret_logical_index_x = prompt_length
 
 
-func _save_to_history(command: String) -> void:
-	if command == "":
-		return
-
-	if _command_history.is_empty() or _command_history[_command_history.size() - 1] != command:
-		_command_history.append(command)
-
-
 func _autocomplete(incomplete_input: String, complete_input: String) -> void:
 	if not complete_input.begins_with(incomplete_input):
 		push_error(
@@ -381,21 +270,6 @@ func _autocomplete(incomplete_input: String, complete_input: String) -> void:
 	# Insert only the missing part at the caret, preserving everything else.
 	for ch: String in suffix:
 		insert_char_at_caret(ch, default_text_color)
-
-
-func _run_next_pasted_command(first_line: bool = false) -> void:
-	if _paste_queue.is_empty():
-		_is_pasting_multiline = false
-		_unlock_input()
-		return
-
-	var command: String = _paste_queue.pop_front()
-	if first_line:
-		_clear_input()
-	else:
-		_create_new_line_with_prompt()
-	_insert_text_at_caret(command)
-	run_command()
 
 
 func _create_display_lines_from_logical_line(logical_line: TerminalLogicalLine) -> void:
@@ -471,40 +345,6 @@ func _get_display_index_from_mouse_position(pos: Vector2) -> Vector2i:
 	return Vector2i(char_x, display_line_y)
 
 
-func _get_selected_text() -> String:
-	if _selection_from_index == _selection_to_index:
-		return ""
-
-	var text_buffer: String = ""
-	var prev_logical_line: TerminalLogicalLine = null
-
-	for d_idx in range(_selection_from_index.y, _selection_to_index.y + 1):
-		var display_line: TerminalDisplayLine = _display_lines[d_idx]
-		var logical_line: TerminalLogicalLine = display_line.logical_line
-
-		var start_char: int = 0
-		var end_char: int = display_line.display_length
-
-		if d_idx == _selection_from_index.y:
-			start_char = _selection_from_index.x
-		if d_idx == _selection_to_index.y:
-			end_char = _selection_to_index.x
-
-		# Insert EOL character only when logical lines end.
-		if prev_logical_line != null and logical_line != prev_logical_line:
-			text_buffer += "\n"
-
-		# Copy the required "slice" by reading directly from the logical line using offsets.
-		text_buffer += logical_line.get_text(
-			display_line.logical_start_index + start_char,
-			display_line.logical_start_index + end_char
-		)
-
-		prev_logical_line = logical_line
-
-	return text_buffer
-
-
 func _lock_input() -> void:
 	_is_input_locked = true
 	caret.is_blinking_allowed = false
@@ -528,20 +368,11 @@ func _on_command_started() -> void:
 
 
 func _on_command_finished() -> void:
-	if _is_pasting_multiline:
-		if _paste_queue.is_empty():
-			_is_pasting_multiline = false
-			_create_new_line_with_prompt()
-			_unlock_input()
-		else:
-			_run_next_pasted_command()
-	else:
-		_create_new_line_with_prompt()
-		_unlock_input()
+	_create_new_line_with_prompt()
+	_unlock_input()
 
 
 func _on_scroll_container_resized() -> void:
-	clear_selection()
 	max_columns = int(floor(get_rect().size.x / _font_width))
 	_recreate_display_lines()
 	_scroll()
@@ -553,26 +384,6 @@ func _on_display_draw() -> void:
 	var d_line_idx: int = 0
 	for display_line: TerminalDisplayLine in _display_lines:
 		var start_idx: int = display_line.logical_start_index
-
-		# Selection.
-		var is_line_selected: bool = false
-		var selection_start_char: int = 0
-		var selection_end_char: int = 0
-		if _selection_from_index.y <= d_line_idx and d_line_idx <= _selection_to_index.y:
-			is_line_selected = true
-			selection_start_char = 0
-			selection_end_char = display_line.display_length
-			if d_line_idx == _selection_from_index.y:
-				selection_start_char = _selection_from_index.x
-			if d_line_idx == _selection_to_index.y:
-				selection_end_char = _selection_to_index.x
-		if is_line_selected:
-			var pos_x: float = selection_start_char * _font_width
-			var pos_y: float = d_line_idx * _font_height
-			var width: float = (selection_end_char - selection_start_char) * _font_width
-			var height: float = _font_height
-			_display_control.draw_rect(Rect2(pos_x, pos_y, width, height), selection_color)
-
 		# Draw characters.
 		for c_idx in range(display_line.display_length):
 			var c: Dictionary = display_line.logical_line.chars[start_idx + c_idx]
@@ -586,16 +397,6 @@ func _on_display_draw() -> void:
 		d_line_idx += 1
 
 
-func _update_selection_bounds() -> void:
-	if (_selection_anchor_index.y < _selection_cursor_index.y
-			or (_selection_anchor_index.y == _selection_cursor_index.y
-			and _selection_anchor_index.x < _selection_cursor_index.x)):
-		_selection_from_index = _selection_anchor_index
-		_selection_to_index = _selection_cursor_index
-	else:
-		_selection_from_index = _selection_cursor_index
-		_selection_to_index = _selection_anchor_index
-
 
 func _on_display_gui_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.is_pressed() and not _is_input_locked:
@@ -603,23 +404,6 @@ func _on_display_gui_input(event: InputEvent) -> void:
 		_input_handler.handle_key_event(event)
 		return
 
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.is_pressed():
-				clear_selection()
-				_is_selecting = true
-				_selection_anchor_index = _get_display_index_from_mouse_position(event.position)
-				_selection_cursor_index = _selection_anchor_index
-			elif event.is_released() and _is_selecting:
-				_is_selecting = false
-				_update_selection_bounds()
-				_display_control.queue_redraw()
-
-	if event is InputEventMouseMotion:
-		if _is_selecting:
-			_selection_cursor_index = _get_display_index_from_mouse_position(event.position)
-			_update_selection_bounds()
-			_display_control.queue_redraw()
 
 func _on_mail_button_pressed() -> void:
 	request_switch_screen.emit(&"other")

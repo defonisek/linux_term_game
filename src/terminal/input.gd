@@ -9,23 +9,6 @@ func initialize(terminal: Terminal) -> void:
 func handle_key_event(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		_terminal.caret.reset_timer()
-		if (event.is_ctrl_pressed() or event.is_shift_pressed() or event.is_alt_pressed()
-				or event.is_meta_pressed()):
-			match event.keycode:
-				# Копирование как в терминале
-				Key.KEY_C:
-					if event.is_ctrl_pressed() and event.is_shift_pressed():
-						_terminal.copy_text()
-						return
-				Key.KEY_INSERT:
-					if event.is_shift_pressed():
-						_terminal.copy_text()
-						return
-				# Вставка как в терминале
-				Key.KEY_V:
-					if event.is_ctrl_pressed() and event.is_shift_pressed():
-						_terminal.paste_text()
-						return
 		match event.keycode:
 			Key.KEY_ENTER, Key.KEY_KP_ENTER:
 				_terminal.run_command()
@@ -37,10 +20,6 @@ func handle_key_event(event: InputEvent) -> void:
 				_key_backspace()
 			Key.KEY_DELETE:
 				_key_delete()
-			Key.KEY_UP:
-				_terminal.navigate_history_up()
-			Key.KEY_DOWN:
-				_terminal.navigate_history_down()
 			Key.KEY_TAB:
 				_terminal.invoke_autocompletion()
 			_:
@@ -49,13 +28,11 @@ func handle_key_event(event: InputEvent) -> void:
 
 func _insert_printable_character(event: InputEvent) -> void:
 	if event.unicode != 0:
-		_terminal.clear_selection()
 		_terminal.insert_char_at_caret(char(event.unicode))
 
 
 func _key_backspace() -> void:
 	if _terminal.caret_logical_index_x > _terminal.primary_prompt_text.length():
-		_terminal.clear_selection()
 		_terminal.get_active_logical_line().delete_char(_terminal.caret_logical_index_x - 1)
 		_terminal.caret_logical_index_x -= 1
 		_terminal.recreate_display_lines_since_last_input_only()
@@ -63,7 +40,6 @@ func _key_backspace() -> void:
 
 func _key_delete() -> void:
 	if _terminal.caret_logical_index_x < _terminal.get_active_logical_line().length():
-		_terminal.clear_selection()
 		_terminal.get_active_logical_line().delete_char(_terminal.caret_logical_index_x)
 		_terminal.recreate_display_lines_since_last_input_only()
 
