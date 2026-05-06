@@ -184,8 +184,9 @@ func finish_level() -> void:
 	else:
 		terminal.print_on_terminal("Поздравляем! Все уровни пройдены.", Color.GREEN)
 
-	await get_tree().create_timer(1.5).timeout
+	await get_tree().create_timer(2).timeout
 	await _play_static_transition(show_menu)
+	menu_layer.update_buttons()
 	# Сброс состояния уровня
 	current_level = 0
 	current_stage_index = 0
