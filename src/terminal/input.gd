@@ -54,13 +54,3 @@ func _key_right() -> void:
 	if _terminal.caret_logical_index_x < _terminal.get_active_logical_line().length():
 		_terminal.caret_logical_index_x += 1
 		_terminal.update_caret_position()
-
-
-func _jump_to_start() -> void:
-	_terminal.caret_logical_index_x = _terminal.primary_prompt_text.length()
-	_terminal.update_caret_position()
-
-
-func _jump_to_end() -> void:
-	_terminal.caret_logical_index_x = _terminal.get_active_logical_line().length()
-	_terminal.update_caret_position()
