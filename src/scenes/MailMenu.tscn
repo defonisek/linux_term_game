@@ -15,17 +15,12 @@ shader_parameter/roll = true
 shader_parameter/roll_speed = 1.0
 shader_parameter/roll_size = 7.8570003732075
 shader_parameter/roll_variation = 1.8
-shader_parameter/distort_intensity = 0.0
 shader_parameter/noise_opacity = 0.066000003135
 shader_parameter/noise_speed = 5.0
 shader_parameter/static_noise_intensity = 0.010000000475
 shader_parameter/aberration = 0.00500004773750006
 shader_parameter/brightness = 1.4
 shader_parameter/discolor = true
-shader_parameter/warp_amount = 0.0
-shader_parameter/clip_warp = false
-shader_parameter/vignette_intensity = 0.0
-shader_parameter/vignette_opacity = 0.0
 
 [node name="MailMenu" type="Control" unique_id=1676138360]
 layout_mode = 3
@@ -54,8 +49,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = 1520.0
-offset_bottom = 780.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -73,7 +66,7 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="Frame/FrameMargin/FrameVBox/TitleBar/TitleMargin" unique_id=62505667]
 layout_mode = 2
-text = "chat v0.0.1"
+text = "chat v0.0.1 | press r to return"
 
 [node name="FriendBar" type="PanelContainer" parent="Frame/FrameMargin/FrameVBox" unique_id=1958162805]
 layout_mode = 2

@@ -32,8 +32,8 @@ var levels_data = {
 		{
 			"type": "send_mail",
 			"messages": [
-				"Отлично! Ты справился с echo.",
-                "Теперь попробуй вывести текст: 'echo Привет, мир!'"
+				"echo выводит то, что ты пишешь после неё.",
+				"Теперь попробуй вывести текст, например: 'echo привет, мир!' или что-нибудь свое"
 			]
 		},
 		{ "type": "wait_for_chat_read" },
@@ -41,7 +41,7 @@ var levels_data = {
 			"type": "wait_command",
 			"command": "echo",
 			"on_fail": "retry_message",
-			"retry_text": "Введи 'echo Привет, мир!' (с пробелом)."
+			"retry_text": "нет, попробуй ещё.."
 		},
 		{
 			"type": "send_mail",
@@ -173,7 +173,6 @@ func wait_for_command(required_command: String, stage_data: Dictionary) -> void:
 func run_minigame(minigame_id: String) -> void:
 	terminal.print_on_terminal("Запущена мини-игра: " + minigame_id, Color.YELLOW)
 	await get_tree().create_timer(2.0).timeout   # имитация
-	terminal.print_on_terminal("Мини-игра завершена. Попробуйте снова.", Color.YELLOW)
 
 func finish_level() -> void:
 	var completed_level = GameState.selected_level

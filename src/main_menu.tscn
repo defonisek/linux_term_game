@@ -5,7 +5,7 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fu7sn"]
 shader = ExtResource("2_7vrkn")
-shader_parameter/overlay = false
+shader_parameter/overlay = true
 shader_parameter/scanlines_opacity = 0.0010000000475
 shader_parameter/scanlines_width = 0.0
 shader_parameter/grille_opacity = 0.07600000361
@@ -15,17 +15,12 @@ shader_parameter/roll = true
 shader_parameter/roll_speed = 1.0
 shader_parameter/roll_size = 7.8570003732075
 shader_parameter/roll_variation = 1.8
-shader_parameter/distort_intensity = 0.0
 shader_parameter/noise_opacity = 0.066000003135
 shader_parameter/noise_speed = 5.0
 shader_parameter/static_noise_intensity = 0.010000000475
 shader_parameter/aberration = 0.00500004773750006
 shader_parameter/brightness = 1.4
 shader_parameter/discolor = true
-shader_parameter/warp_amount = 0.0
-shader_parameter/clip_warp = false
-shader_parameter/vignette_intensity = 0.0
-shader_parameter/vignette_opacity = 0.0
 
 [node name="MainMenu" type="Control" unique_id=1424562410]
 layout_mode = 3
@@ -69,10 +64,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -28.0
-offset_right = 180.0
-offset_bottom = 172.0
+offset_left = -45.5
+offset_top = -85.5
+offset_right = 45.5
+offset_bottom = 85.5
 grow_horizontal = 2
 grow_vertical = 2
 

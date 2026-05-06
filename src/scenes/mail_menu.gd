@@ -12,7 +12,11 @@ signal request_switch_screen(screen_name: StringName)
 @onready var messages_vbox: VBoxContainer = $Frame/FrameMargin/FrameVBox/ChatArea/MessagesVBox
 
 func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	
 	_setup_layout()
+
 	set_process_input(true)
 	back_button.pressed.connect(_on_back_pressed)
 	messages_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -48,9 +52,7 @@ func _setup_layout() -> void:
 
 	title_bar.custom_minimum_size = Vector2(0, 34)
 	friend_bar.custom_minimum_size = Vector2(0, 30)
-
-	back_button.text = "← назад"
-
+	
 func add_message(text: String) -> void:
 	var line := PanelContainer.new()
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
