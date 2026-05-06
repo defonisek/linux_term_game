@@ -1,0 +1,108 @@
+[gd_scene format=3 uid="uid://cluptq2ay52xb"]
+
+[ext_resource type="Script" uid="uid://bqntobxnimm4o" path="res://scenes/mail_menu.gd" id="1_csrw7"]
+[ext_resource type="Shader" uid="uid://0thurk5h5k0m" path="res://old.gdshader" id="2_6wa58"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ffdx7"]
+shader = ExtResource("2_6wa58")
+shader_parameter/overlay = true
+shader_parameter/scanlines_opacity = 0.0010000000475
+shader_parameter/scanlines_width = 0.0
+shader_parameter/grille_opacity = 0.07600000361
+shader_parameter/resolution = Vector2(1920, 1080)
+shader_parameter/pixelate = true
+shader_parameter/roll = true
+shader_parameter/roll_speed = 1.0
+shader_parameter/roll_size = 7.8570003732075
+shader_parameter/roll_variation = 1.8
+shader_parameter/distort_intensity = 0.0
+shader_parameter/noise_opacity = 0.066000003135
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.010000000475
+shader_parameter/aberration = 0.00500004773750006
+shader_parameter/brightness = 1.4
+shader_parameter/discolor = true
+shader_parameter/warp_amount = 0.0
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.0
+shader_parameter/vignette_opacity = 0.0
+
+[node name="MailMenu" type="Control" unique_id=1676138360]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1520.0
+offset_bottom = 780.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_csrw7")
+
+[node name="BackButton" type="Button" parent="." unique_id=1374714014]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_bottom = 100.0
+grow_horizontal = 0
+text = "BACK"
+
+[node name="Frame" type="PanelContainer" parent="." unique_id=2109386443]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1520.0
+offset_bottom = 780.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FrameMargin" type="MarginContainer" parent="Frame" unique_id=288918225]
+layout_mode = 2
+
+[node name="FrameVBox" type="VBoxContainer" parent="Frame/FrameMargin" unique_id=1554768969]
+layout_mode = 2
+
+[node name="TitleBar" type="PanelContainer" parent="Frame/FrameMargin/FrameVBox" unique_id=1332374083]
+layout_mode = 2
+
+[node name="TitleMargin" type="MarginContainer" parent="Frame/FrameMargin/FrameVBox/TitleBar" unique_id=2094628726]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Frame/FrameMargin/FrameVBox/TitleBar/TitleMargin" unique_id=62505667]
+layout_mode = 2
+text = "chat v0.0.1"
+
+[node name="FriendBar" type="PanelContainer" parent="Frame/FrameMargin/FrameVBox" unique_id=1958162805]
+layout_mode = 2
+
+[node name="FriendMargin" type="MarginContainer" parent="Frame/FrameMargin/FrameVBox/FriendBar" unique_id=1578124667]
+layout_mode = 2
+
+[node name="FriendLabel" type="Label" parent="Frame/FrameMargin/FrameVBox/FriendBar/FriendMargin" unique_id=1549625553]
+layout_mode = 2
+text = "друг"
+
+[node name="ChatArea" type="ScrollContainer" parent="Frame/FrameMargin/FrameVBox" unique_id=832458183]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MessagesVBox" type="VBoxContainer" parent="Frame/FrameMargin/FrameVBox/ChatArea" unique_id=1719061097]
+layout_mode = 2
+
+[node name="CRT" type="ColorRect" parent="Frame" unique_id=1424612276]
+material = SubResource("ShaderMaterial_ffdx7")
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Background" type="ColorRect" parent="." unique_id=509171891]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.14767182, 0.14767179, 0.14767179, 0.14901961)

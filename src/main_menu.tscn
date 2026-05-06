@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://bb6okwmmh6hma"]
+
+[ext_resource type="Script" uid="uid://b7kh188lyr84y" path="res://main_menu.gd" id="1_06t4h"]
+[ext_resource type="Shader" uid="uid://0thurk5h5k0m" path="res://old.gdshader" id="2_7vrkn"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fu7sn"]
+shader = ExtResource("2_7vrkn")
+shader_parameter/overlay = false
+shader_parameter/scanlines_opacity = 0.0010000000475
+shader_parameter/scanlines_width = 0.0
+shader_parameter/grille_opacity = 0.07600000361
+shader_parameter/resolution = Vector2(1920, 1080)
+shader_parameter/pixelate = true
+shader_parameter/roll = true
+shader_parameter/roll_speed = 1.0
+shader_parameter/roll_size = 7.8570003732075
+shader_parameter/roll_variation = 1.8
+shader_parameter/distort_intensity = 0.0
+shader_parameter/noise_opacity = 0.066000003135
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.010000000475
+shader_parameter/aberration = 0.00500004773750006
+shader_parameter/brightness = 1.4
+shader_parameter/discolor = true
+shader_parameter/warp_amount = 0.0
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.0
+shader_parameter/vignette_opacity = 0.0
+
+[node name="MainMenu" type="Control" unique_id=1424562410]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_06t4h")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1468679055]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13682577, 0.13682574, 0.13682571, 1)
+
+[node name="CRT" type="ColorRect" parent="Background" unique_id=1920078896]
+material = SubResource("ShaderMaterial_fu7sn")
+layout_mode = 0
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="." unique_id=351025057]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -72.5
+offset_right = 72.5
+offset_bottom = 23.0
+grow_horizontal = 2
+text = "LINUX EDUCATION"
+horizontal_alignment = 1
+
+[node name="Levels" type="VBoxContainer" parent="." unique_id=1574401832]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -28.0
+offset_right = 180.0
+offset_bottom = 172.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Level1" type="Button" parent="Levels" unique_id=1753916454]
+layout_mode = 2
+text = "Уровень 1"
+
+[node name="Level2" type="Button" parent="Levels" unique_id=1048977183]
+layout_mode = 2
+text = "Уровень 2"
+
+[node name="Level3" type="Button" parent="Levels" unique_id=1208928624]
+layout_mode = 2
+text = "Уровень 3"
+
+[node name="Level4" type="Button" parent="Levels" unique_id=1282138014]
+layout_mode = 2
+text = "Уровень 4"
+
+[node name="Level5" type="Button" parent="Levels" unique_id=460447113]
+layout_mode = 2
+text = "Уровень 5"

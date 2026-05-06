@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://brxeuebe2s033"]
+
+[ext_resource type="Script" uid="uid://imc5q8jsr4ck" path="res://terminal/terminal.gd" id="1_fvjlm"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_636f7"]
+font_size = 100
+
+[sub_resource type="LabelSettings" id="LabelSettings_xs1su"]
+font_size = 32
+
+[node name="Terminal" type="PanelContainer" unique_id=955862307]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1520.0
+offset_bottom = 780.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_fvjlm")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=1097402174]
+layout_mode = 2
+
+[node name="Display" type="PanelContainer" parent="ScrollContainer" unique_id=215494263]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 2
+mouse_filter = 1
+
+[node name="TopBar" type="Control" parent="." unique_id=765879254]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MailButton" type="Button" parent="TopBar" unique_id=1655617016]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -123.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = 128.0
+grow_horizontal = 0
+theme_override_colors/icon_normal_color = Color(1, 1, 1, 0)
+theme_override_constants/h_separation = 0
+flat = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar/MailButton" unique_id=106636394]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -47.0
+offset_top = -60.0
+offset_right = 6.0
+offset_bottom = 37.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 2
+
+[node name="Icon" type="Label" parent="TopBar/MailButton/HBoxContainer" unique_id=319711754]
+layout_mode = 2
+text = "✉"
+label_settings = SubResource("LabelSettings_636f7")
+horizontal_alignment = 3
+vertical_alignment = 3
+
+[node name="Badge" type="Label" parent="TopBar/MailButton/HBoxContainer" unique_id=1401006307]
+layout_mode = 2
+text = "!"
+label_settings = SubResource("LabelSettings_xs1su")
+vertical_alignment = 2
+
+[connection signal="tree_exiting" from="." to="." method="_on_tree_exiting"]
+[connection signal="resized" from="ScrollContainer" to="." method="_on_scroll_container_resized"]
+[connection signal="draw" from="ScrollContainer/Display" to="." method="_on_display_draw"]
+[connection signal="focus_entered" from="ScrollContainer/Display" to="." method="_on_display_focus_entered"]
+[connection signal="focus_exited" from="ScrollContainer/Display" to="." method="_on_display_focus_exited"]
+[connection signal="gui_input" from="ScrollContainer/Display" to="." method="_on_display_gui_input"]
