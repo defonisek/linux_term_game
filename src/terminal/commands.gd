@@ -124,6 +124,30 @@ func _register_commands() -> void:
 		TerminalArguments.OptionType.FLAG
 	)
 	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "cd"
+	cmd_obj.description = "Change the current directory."
+	cmd_obj.callable = _cmd_cd
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_positional("directory", "Directory to change to.")
+	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "ls"
+	cmd_obj.description = "List directory contents."
+	cmd_obj.callable = _cmd_ls
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_option("all", "a", "Show hidden files (starting with .)", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_option("long", "l", "Use a long listing format.", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_positional("directory", "Directory to list.", "./")
+	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "pwd"
+	cmd_obj.description = "Print current working directory."
+	cmd_obj.callable = _cmd_pwd
+	_register_command(cmd_obj)
 
 	cmd_obj = TerminalCommand.new()
 	cmd_obj.name = "help"
@@ -269,4 +293,47 @@ func _cmd_date() -> void:
 	var str_date = fmt % [datetime.year, datetime.month, datetime.day,
 						   datetime.hour, datetime.minute, datetime.second]
 	_terminal.print_on_terminal(str_date)
+	command_finished.emit()
+	
+func _cmd_cd() -> void:
+	if _parsed_args.positionals.size() != 1:
+		_terminal.print_on_terminal("cd: missing operand", Color.RED)
+		command_finished.emit()
+		return
+	var target = _parsed_args.positionals[0]
+	var new_pwd = _terminal.file_system.cd(target, _terminal.cwd)
+	if new_pwd == "":
+		_terminal.print_on_terminal("cd: no such file or directory: %s" % target, Color.RED)
+	else:
+		_terminal.cwd = new_pwd
+	command_finished.emit()
+
+func _cmd_ls() -> void:
+	var show_all = _parsed_args.has_flag("all")
+	var long_format = _parsed_args.has_flag("long")
+	var target = _parsed_args.positionals[0]
+
+	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
+
+	var node = _terminal.file_system.get_node(abs_target)
+	if node == null:
+		_terminal.print_on_terminal("ls: cannot access '%s': No such file or directory" % target, Color.RED)
+		command_finished.emit()
+		return
+
+	if node.is_dir:
+		var names = _terminal.file_system.list_dir(abs_target, show_all)
+		if long_format:
+			for name in names:
+				var info = _terminal.file_system.get_info(abs_target, name)
+				_terminal.print_on_terminal(info)
+		else:
+			_terminal.print_on_terminal("  ".join(names))
+	else:
+		_terminal.print_on_terminal(target)
+
+	command_finished.emit()
+
+func _cmd_pwd() -> void:
+	_terminal.print_on_terminal(_terminal.cwd)
 	command_finished.emit()

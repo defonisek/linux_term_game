@@ -9,6 +9,8 @@ const GODOT_DEFAULT_FONT_SIZE: int = 16
 @export var primary_prompt_text: String = "player> "
 @export var caret_blink_interval: float = 0.5
 
+var file_system: VirtualFileSystem
+
 var caret: TerminalCaret
 var caret_logical_index_x: int = 0
 
@@ -32,6 +34,11 @@ var _pending_other_screen: bool = false
 
 signal request_switch_screen(screen_name: StringName)
 signal command_submitted(command_name: StringName, argv: PackedStringArray, full_command: String)
+
+var cwd: String = "/home/player" # текущая рабочая директория
+var home_dir: String = "/home/player"
+var user_name: String = "player"
+
 
 @onready var _scroll_container: ScrollContainer = find_child("ScrollContainer")
 @onready var _display_control: PanelContainer = find_child("Display")
@@ -197,6 +204,7 @@ func _setup_terminal(should_recreate_display_lines: bool = true) -> void:
 	_font = font_file
 	_font_width = _font.get_char_size(ord('A'), font_size).x
 	_font_height = _font.get_height() * font_size / GODOT_DEFAULT_FONT_SIZE
+	file_system = VirtualFileSystem.new()
 
 	if caret != null:
 		caret.font_width = _font_width
