@@ -105,6 +105,12 @@ func _register_commands() -> void:
 		TerminalArguments.OptionType.FLAG
 	)
 	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "whoami"
+	cmd_obj.description = "Print the current user name."
+	cmd_obj.callable = _cmd_whoami
+	_register_command(cmd_obj)
 
 	cmd_obj = TerminalCommand.new()
 	cmd_obj.name = "help"
@@ -231,4 +237,12 @@ func _cmd_hello() -> void:
 	if _parsed_args.has_flag("uppercase"):
 		output = output.to_upper()
 	_terminal.print_on_terminal(output)
+	command_finished.emit()
+	
+func _cmd_whoami() -> void:
+	# Возможно добавится способ ввести свой username
+	var user = ""
+	if user == "":
+		user = "player"
+	_terminal.print_on_terminal(user)
 	command_finished.emit()
