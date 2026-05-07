@@ -148,6 +148,12 @@ func _register_commands() -> void:
 	cmd_obj.description = "Print current working directory."
 	cmd_obj.callable = _cmd_pwd
 	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "hostname"
+	cmd_obj.description = "Show the system's host name."
+	cmd_obj.callable = _cmd_hostname
+	_register_command(cmd_obj)
 
 	cmd_obj = TerminalCommand.new()
 	cmd_obj.name = "help"
@@ -336,4 +342,8 @@ func _cmd_ls() -> void:
 
 func _cmd_pwd() -> void:
 	_terminal.print_on_terminal(_terminal.cwd)
+	command_finished.emit()
+	
+func _cmd_hostname() -> void:
+	_terminal.print_on_terminal("secret-lab-34")
 	command_finished.emit()
