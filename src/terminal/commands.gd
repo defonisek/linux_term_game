@@ -111,6 +111,19 @@ func _register_commands() -> void:
 	cmd_obj.description = "Print the current user name."
 	cmd_obj.callable = _cmd_whoami
 	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "date"
+	cmd_obj.description = "Print the system date and time."
+	cmd_obj.callable = _cmd_date
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_option(
+		"utc", "u",
+		"Display time in UTC instead of local time.",
+		false,
+		TerminalArguments.OptionType.FLAG
+	)
+	_register_command(cmd_obj)
 
 	cmd_obj = TerminalCommand.new()
 	cmd_obj.name = "help"
@@ -245,4 +258,15 @@ func _cmd_whoami() -> void:
 	if user == "":
 		user = "player"
 	_terminal.print_on_terminal(user)
+	command_finished.emit()
+
+func _cmd_date() -> void:
+	var datetime = Time.get_datetime_dict_from_system()
+	var fmt = "%04d-%02d-%02d %02d:%02d:%02d"
+	var use_utc = _parsed_args.has_flag("utc")
+	if use_utc:
+		datetime = Time.get_datetime_dict_from_system(true)   # true = UTC
+	var str_date = fmt % [datetime.year, datetime.month, datetime.day,
+						   datetime.hour, datetime.minute, datetime.second]
+	_terminal.print_on_terminal(str_date)
 	command_finished.emit()

@@ -33,13 +33,14 @@ var levels_data = {
 			"type": "send_mail",
 			"messages": [
 				"echo выводит то, что ты пишешь после неё.",
-				"Теперь попробуй вывести текст, например: 'echo привет, мир!' или что-нибудь свое"
+				"Теперь попробуй вывести текст, например: 'echo привет!'"
 			]
 		},
 		{ "type": "wait_for_chat_read" },
 		{
 			"type": "wait_command",
 			"command": "echo",
+			"args": ["привет!"],
 			"on_fail": "retry_message",
 			"retry_text": "нет, попробуй ещё.."
 		},
@@ -119,26 +120,42 @@ func handle_wait_for_chat_read() -> void:
 
 func _process_wait_command(stage: Dictionary) -> void:
 	var required_command: StringName = stage["command"]
+	var expected_args: Array = stage.get("args", [])
 	var on_fail: String = stage.get("on_fail", "retry_message")
+
 	while true:
 		var result = await terminal.command_submitted
 		var cmd_name: StringName = result[0]
 		var argv: PackedStringArray = result[1]
 		var full_command: String = result[2]
+
 		if str(cmd_name) == str(required_command):
-			current_stage_index += 1
-			return
+			# Проверяем аргументы, если они заданы
+			if expected_args.is_empty():
+				# Неважно, с какими аргументами, подходит любой вызов команды
+				current_stage_index += 1
+				return
+			else:
+				# Нужно точное совпадение аргументов
+				if Array(argv) == expected_args:
+					current_stage_index += 1
+					return
+				else:
+					# Аргументы не совпадают – обрабатываем как ошибку
+					_handle_fail(on_fail, stage)
 		else:
-			match on_fail:
-				"minigame":
-					await run_minigame(stage.get("minigame_id", "default"))
-				"retry_message":
-					var retry_text = stage.get("retry_text", "Неверная команда. Попробуй ещё раз.")
-					other_screen.add_message(retry_text)
-					terminal.set_other_screen_pending(true)
-				_:
-					# Ничего не делаем, просто ждём следующую команду
-					pass
+			_handle_fail(on_fail, stage)
+
+func _handle_fail(on_fail: String, stage: Dictionary) -> void:
+	match on_fail:
+		"minigame":
+			await run_minigame(stage.get("minigame_id", "default"))
+		"retry_message":
+			var retry_text = stage.get("retry_text", "Неверная команда. Попробуй ещё раз.")
+			other_screen.add_message(retry_text)
+			terminal.set_other_screen_pending(true)
+		_:
+			pass   # ничего не делаем
 
 func handle_minigame(stage: Dictionary) -> void:
 	var minigame_id = stage.get("minigame_id", "default")
