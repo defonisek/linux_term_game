@@ -160,6 +160,22 @@ func _register_commands() -> void:
 	cmd_obj.description = "List the available commands."
 	cmd_obj.callable = _cmd_help
 	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "mkdir"
+	cmd_obj.description = "Make directories."
+	cmd_obj.callable = _cmd_mkdir
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_positional("directory", "Directory to create.")
+	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "cat"
+	cmd_obj.description = "Concatenate files and print on the standard output."
+	cmd_obj.callable = _cmd_cat
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_positional("file", "File to display.")
+	_register_command(cmd_obj)
 
 func _register_command(cmd_obj: TerminalCommand) -> void:
 	_build_long_help(cmd_obj)
@@ -346,4 +362,31 @@ func _cmd_pwd() -> void:
 	
 func _cmd_hostname() -> void:
 	_terminal.print_on_terminal("secret-lab-34")
+	command_finished.emit()
+
+func _cmd_mkdir() -> void:
+	var target = _parsed_args.positionals[0]
+	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
+	var parent_path = _terminal.file_system._parent_path(abs_target)
+	var name = _terminal.file_system._base_name(abs_target)
+
+	var parent = _terminal.file_system.get_node(parent_path)
+	if parent == null or not parent.is_dir:
+		_terminal.print_on_terminal("mkdir: cannot create directory '%s': No such file or directory" % target, Color.RED)
+	elif parent.children.has(name):
+		_terminal.print_on_terminal("mkdir: cannot create directory '%s': File exists" % target, Color.RED)
+	else:
+		_terminal.file_system._make_dir(parent, name)
+	command_finished.emit()
+
+func _cmd_cat() -> void:
+	var target = _parsed_args.positionals[0]
+	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
+	var node = _terminal.file_system.get_node(abs_target)
+	if node == null:
+		_terminal.print_on_terminal("cat: %s: No such file or directory" % target, Color.RED)
+	elif node.is_dir:
+		_terminal.print_on_terminal("cat: %s: Is a directory" % target, Color.RED)
+	else:
+		_terminal.print_on_terminal(node.content)
 	command_finished.emit()

@@ -125,3 +125,126 @@ func _print_node(node: VFSNode, depth: int):
 	if node.is_dir:
 		for child in node.children.values():
 			_print_node(child, depth + 1)
+			
+
+func create_file(parent_abs: String, name: String) -> bool:
+	var parent = get_node(parent_abs)
+	if parent == null or not parent.is_dir:
+		return false
+	if parent.children.has(name):
+		return false          # уже существует
+	_make_file(parent, name, "")
+	return true
+
+
+func create_dir(parent_abs: String, name: String) -> bool:
+	var parent = get_node(parent_abs)
+	if parent == null or not parent.is_dir:
+		return false
+	if parent.children.has(name):
+		return false
+	_make_dir(parent, name)
+	return true
+
+
+func delete(abs_path: String, recursive: bool = false) -> bool:
+	if abs_path == "/":
+		return false   # нельзя удалить корень
+	var node = get_node(abs_path)
+	if node == null:
+		return false
+	if node.is_dir and not recursive:
+		# не удаляем непустую папку без -r
+		if node.children.size() > 0:
+			return false
+	# Находим родителя и удаляем
+	var parent_path = _parent_path(abs_path)
+	var parent = get_node(parent_path)
+	if parent == null:
+		return false
+	var name = _base_name(abs_path)
+	if parent.children.has(name):
+		parent.children.erase(name)
+		return true
+	return false
+
+func copy(src_abs: String, dest_abs: String) -> bool:
+	var src_node = get_node(src_abs)
+	if src_node == null:
+		return false
+	var dest_parent_path = _parent_path(dest_abs)
+	var dest_name = _base_name(dest_abs)
+	var dest_parent = get_node(dest_parent_path)
+	if dest_parent == null or not dest_parent.is_dir:
+		return false
+	if dest_parent.children.has(dest_name):
+		return false   # уже существует
+	var new_node = _deep_copy_node(src_node, dest_name)
+	dest_parent.children[dest_name] = new_node
+	return true
+
+func move(src_abs: String, dest_abs: String) -> bool:
+	var src_node = get_node(src_abs)
+	if src_node == null:
+		return false
+	var src_parent_path = _parent_path(src_abs)
+	var src_name = _base_name(src_abs)
+	if src_parent_path == dest_abs:
+		return false   # нельзя переместить в себя
+	if not delete(src_abs, true):   # удаляем источник (рекурсивно)
+		return false
+	# Создаём копию в новом месте (по сути перемещение = скопировать + удалить)
+	return _place_node(src_node, dest_abs)
+
+func file_exists(abs_path: String) -> bool:
+	return get_node(abs_path) != null
+
+func is_dir(abs_path: String) -> bool:
+	var node = get_node(abs_path)
+	return node != null and node.is_dir
+
+func read_file(abs_path: String) -> String:
+	var node = get_node(abs_path)
+	if node == null or node.is_dir:
+		return ""
+	return node.content
+
+func write_file(abs_path: String, content: String) -> bool:
+	var node = get_node(abs_path)
+	if node == null or node.is_dir:
+		return false
+	node.content = content
+	return true
+
+func _parent_path(abs_path: String) -> String:
+	if abs_path == "/":
+		return "/"
+	var last_slash = abs_path.rfind("/")
+	if last_slash == 0:
+		return "/"
+	return abs_path.substr(0, last_slash)
+
+func _base_name(abs_path: String) -> String:
+	if abs_path == "/":
+		return "/"
+	return abs_path.split("/")[-1]
+
+func _deep_copy_node(src: VFSNode, new_name: String) -> VFSNode:
+	var new_node = VFSNode.new(new_name, src.is_dir)
+	new_node.content = src.content
+	if src.is_dir:
+		for child_name in src.children:
+			var child_copy = _deep_copy_node(src.children[child_name], child_name)
+			new_node.children[child_name] = child_copy
+	return new_node
+
+func _place_node(node: VFSNode, dest_abs: String) -> bool:
+	var parent_path = _parent_path(dest_abs)
+	var name = _base_name(dest_abs)
+	var parent = get_node(parent_path)
+	if parent == null or not parent.is_dir:
+		return false
+	if parent.children.has(name):
+		return false
+	parent.children[name] = node
+	return true
