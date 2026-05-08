@@ -177,6 +177,46 @@ func _register_commands() -> void:
 	cmd_obj.schema.add_positional("file", "File to display.")
 	_register_command(cmd_obj)
 
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "cp"
+	cmd_obj.description = "Copy files and directories."
+	cmd_obj.callable = _cmd_cp
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_positional("source", "Source file/directory.")
+	cmd_obj.schema.add_positional("destination", "Destination file/directory.")
+	_register_command(cmd_obj)
+
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "mv"
+	cmd_obj.description = "Move (rename) files."
+	cmd_obj.callable = _cmd_mv
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_positional("source", "Source file/directory.")
+	cmd_obj.schema.add_positional("destination", "Destination file/directory.")
+	_register_command(cmd_obj)
+	
+
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "rm"
+	cmd_obj.description = "Remove files or directories."
+	cmd_obj.callable = _cmd_rm
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_option("recursive", "r", "Remove directories and their contents recursively.", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_positional("target", "File or directory to remove.")
+	_register_command(cmd_obj)
+	
+	cmd_obj = TerminalCommand.new()
+	cmd_obj.name = "grep"
+	cmd_obj.description = "Search for patterns in files."
+	cmd_obj.callable = _cmd_grep
+	cmd_obj.schema = TerminalCommandSchema.new()
+	cmd_obj.schema.add_option("recursive", "r", "Read all files under each directory, recursively.", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_option("ignore-case", "i", "Ignore case distinctions.", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_option("line-number", "n", "Prefix each line of output with the line number.", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_positional("pattern", "Pattern to search for.")
+	cmd_obj.schema.add_positional("path", "File or directory to search.")
+	_register_command(cmd_obj)
+
 func _register_command(cmd_obj: TerminalCommand) -> void:
 	_build_long_help(cmd_obj)
 	_command_registry[cmd_obj.name] = cmd_obj
@@ -389,4 +429,106 @@ func _cmd_cat() -> void:
 		_terminal.print_on_terminal("cat: %s: Is a directory" % target, Color.RED)
 	else:
 		_terminal.print_on_terminal(node.content)
+	command_finished.emit()
+
+
+func _cmd_cp() -> void:
+	var src = _parsed_args.positionals[0]
+	var dest = _parsed_args.positionals[1]
+	var abs_src = _terminal.file_system.resolve(src, _terminal.cwd)
+	var abs_dest = _terminal.file_system.resolve(dest, _terminal.cwd)
+	# Если dest существующая директория, то копируем внутрь с тем же именем
+	var dest_node = _terminal.file_system.get_node(abs_dest)
+	if dest_node != null and dest_node.is_dir:
+		var src_name = _terminal.file_system._base_name(abs_src)
+		abs_dest = abs_dest + "/" + src_name if abs_dest != "/" else "/" + src_name
+	if _terminal.file_system.copy(abs_src, abs_dest):
+		pass
+	else:
+		_terminal.print_on_terminal("cp: cannot copy: operation failed", Color.RED)
+	command_finished.emit()
+
+func _cmd_mv() -> void:
+	var src = _parsed_args.positionals[0]
+	var dest = _parsed_args.positionals[1]
+	var abs_src = _terminal.file_system.resolve(src, _terminal.cwd)
+	var abs_dest = _terminal.file_system.resolve(dest, _terminal.cwd)
+	var dest_node = _terminal.file_system.get_node(abs_dest)
+	if dest_node != null and dest_node.is_dir:
+		var src_name = _terminal.file_system._base_name(abs_src)
+		abs_dest = abs_dest + "/" + src_name if abs_dest != "/" else "/" + src_name
+	if _terminal.file_system.move(abs_src, abs_dest):
+		pass
+	else:
+		_terminal.print_on_terminal("mv: cannot move: operation failed", Color.RED)
+	command_finished.emit()
+
+func _cmd_rm() -> void:
+	var recursive = _parsed_args.has_flag("recursive")
+	var target = _parsed_args.positionals[0]
+	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
+	var node = _terminal.file_system.get_node(abs_target)
+	if node == null:
+		_terminal.print_on_terminal("rm: cannot remove '%s': No such file or directory" % target, Color.RED)
+		command_finished.emit()
+		return
+	if node.is_dir and not recursive:
+		_terminal.print_on_terminal("rm: cannot remove '%s': Is a directory" % target, Color.RED)
+		command_finished.emit()
+		return
+	if _terminal.file_system.delete(abs_target, recursive):
+		# Успешно
+		pass
+	else:
+		_terminal.print_on_terminal("rm: cannot remove '%s': Permission denied" % target, Color.RED)
+	command_finished.emit()
+
+func _cmd_grep() -> void:
+	var pattern = _parsed_args.positionals[0]
+	var target = _parsed_args.positionals[1]
+	var recursive = _parsed_args.has_flag("recursive")
+	var ignore_case = _parsed_args.has_flag("ignore-case")
+	var show_line_number = _parsed_args.has_flag("line-number")
+	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
+	var node = _terminal.file_system.get_node(abs_target)
+	if node == null:
+		_terminal.print_on_terminal("grep: %s: No such file or directory" % target, Color.RED)
+		command_finished.emit()
+		return
+	# Собираем файлы для поиска
+	var files_to_search: Array[String] = []
+	if node.is_dir:
+		if not recursive:
+			_terminal.print_on_terminal("grep: %s: Is a directory" % target, Color.RED)
+			command_finished.emit()
+			return
+		files_to_search = _terminal.file_system.list_all_files(abs_target)
+	else:
+		files_to_search.append(abs_target)
+	# Поиск
+	var found_any = false
+	for file_path in files_to_search:
+		var content = _terminal.file_system.read_file(file_path)
+		if content == "":
+			continue
+		var lines = content.split("\n")
+		for line_idx in range(lines.size()):
+			var line = lines[line_idx]
+			var match_found = false
+			if ignore_case:
+				match_found = line.to_lower().find(pattern.to_lower()) != -1
+			else:
+				match_found = line.find(pattern) != -1
+			if match_found:
+				found_any = true
+				var prefix = ""
+				# Если ищем в нескольких файлах (или директории), добавляем имя файла
+				if files_to_search.size() > 1 or node.is_dir:
+					prefix += file_path + ":"
+				if show_line_number:
+					prefix += str(line_idx + 1) + ":"
+				_terminal.print_on_terminal(prefix + line)
+	if not found_any:
+		# grep ничего не выводит, если ничего не найдено
+		pass
 	command_finished.emit()

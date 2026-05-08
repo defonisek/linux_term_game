@@ -21,7 +21,7 @@ func _init():
 func _build_default_tree():
 	var home = _make_dir(root, "home")
 	var player_dir = _make_dir(home, "player")
-	_make_file(player_dir, "readme.txt", "Добро пожаловать, игрок!\nИспользуй команды терминала.")
+	_make_file(player_dir, "readme.txt", "Добро пожаловать, игрок!\nИспользуй команды терминала. терминала терминала терминала терминала терминала терминала терминала терминала терминала \n терминала терминала терминала терминала терминалатерминала терминала")
 	var docs = _make_dir(player_dir, "documents")
 	_make_file(docs, "notes.txt", "Заметки: выучить ls и cd.")
 	_make_dir(player_dir, "downloads")
@@ -248,3 +248,20 @@ func _place_node(node: VFSNode, dest_abs: String) -> bool:
 		return false
 	parent.children[name] = node
 	return true
+
+func list_all_files(dir_abs: String) -> Array[String]:
+	var out: Array[String] = []
+	_collect_files_recursive(dir_abs, out)
+	return out
+
+func _collect_files_recursive(dir_abs: String, out: Array[String]) -> void:
+	var node = get_node(dir_abs)
+	if node == null or not node.is_dir:
+		return
+	for child_name in node.children:
+		var child = node.children[child_name]
+		var child_path = dir_abs + "/" + child_name if dir_abs != "/" else "/" + child_name
+		if child.is_dir:
+			_collect_files_recursive(child_path, out)
+		else:
+			out.append(child_path)

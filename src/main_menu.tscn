@@ -54,7 +54,7 @@ offset_left = -72.5
 offset_right = 72.5
 offset_bottom = 23.0
 grow_horizontal = 2
-text = "LINUX EDUCATION"
+text = "LINUX TERMINAL EDUCATION"
 horizontal_alignment = 1
 
 [node name="Levels" type="VBoxContainer" parent="." unique_id=1574401832]
