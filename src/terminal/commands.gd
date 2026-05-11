@@ -202,6 +202,7 @@ func _register_commands() -> void:
 	cmd_obj.callable = _cmd_rm
 	cmd_obj.schema = TerminalCommandSchema.new()
 	cmd_obj.schema.add_option("recursive", "r", "Remove directories and their contents recursively.", false, TerminalArguments.OptionType.FLAG)
+	cmd_obj.schema.add_option("force", "f", "ignore nonexistent files and arguments, never prompt", false, TerminalArguments.OptionType.FLAG)
 	cmd_obj.schema.add_positional("target", "File or directory to remove.")
 	_register_command(cmd_obj)
 	
@@ -463,25 +464,73 @@ func _cmd_mv() -> void:
 		_terminal.print_on_terminal("mv: cannot move: operation failed", Color.RED)
 	command_finished.emit()
 
+	
 func _cmd_rm() -> void:
 	var recursive = _parsed_args.has_flag("recursive")
-	var target = _parsed_args.positionals[0]
+	var force     = _parsed_args.has_flag("force")
+	var target    = _parsed_args.positionals[0]
 	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
-	var node = _terminal.file_system.get_node(abs_target)
+	var node      = _terminal.file_system.get_node(abs_target)
 	if node == null:
-		_terminal.print_on_terminal("rm: cannot remove '%s': No such file or directory" % target, Color.RED)
+		if not force:
+			_terminal.print_on_terminal(
+				"rm: cannot remove '%s': No such file or directory" % target,
+				Color.RED
+			)
 		command_finished.emit()
 		return
 	if node.is_dir and not recursive:
-		_terminal.print_on_terminal("rm: cannot remove '%s': Is a directory" % target, Color.RED)
+		_terminal.print_on_terminal(
+			"rm: cannot remove '%s': Is a directory" % target,
+			Color.RED
+		)
 		command_finished.emit()
 		return
+	# Специальный сценарий для rm -rf /
+	if abs_target == "/" and recursive:
+		_terminal.print_on_terminal("rm: уничтожение всей файловой системы...", Color.YELLOW)
+		# Запускаем анимацию (не вызываем command_finished, он будет в конце анимации)
+		_perform_rm_rf_root.call_deferred()
+		return
+	# Обычное удаление
 	if _terminal.file_system.delete(abs_target, recursive):
-		# Успешно
 		pass
 	else:
-		_terminal.print_on_terminal("rm: cannot remove '%s': Permission denied" % target, Color.RED)
+		if not force:
+			_terminal.print_on_terminal(
+				"rm: cannot remove '%s': Permission denied" % target,
+				Color.RED
+			)
 	command_finished.emit()
+	
+func _perform_rm_rf_root() -> void:
+	var file_system = _terminal.file_system
+	var root = file_system.root
+	# Собираем все пути в порядке post-order (сначала содержимое, потом папка)
+	var paths_to_remove: Array[String] = []
+	_collect_all_paths(root, "/", paths_to_remove)
+	# Удаляем все
+	for path in paths_to_remove:
+		_terminal.print_on_terminal("rm: removing '" + path + "'")
+		await _terminal.get_tree().create_timer(0.07).timeout
+	# Окончательно очищаем дерево
+	root.children.clear()
+	# Финальные сообщения
+	_terminal.print_on_terminal("Система уничтожена.", Color.GREEN)
+	_terminal.print_on_terminal("Спасибо за игру!", Color.GREEN)
+	command_finished.emit()
+
+func _collect_all_paths(node: VirtualFileSystem.VFSNode, current_path: String, out_paths: Array[String]) -> void:
+	if not node.is_dir:
+		out_paths.append(current_path)
+		return
+	for child_name in node.children.keys():
+		var child = node.children[child_name]
+		var child_path = current_path + ("/" if current_path != "/" else "") + child_name
+		_collect_all_paths(child, child_path, out_paths)
+	if current_path != "/":
+		out_paths.append(current_path)
+
 
 func _cmd_grep() -> void:
 	var pattern = _parsed_args.positionals[0]

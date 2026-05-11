@@ -78,6 +78,21 @@ func _build_default_tree():
 	var log = _make_dir(var_dir, "log")
 	_make_file(log, "syslog", "Jan 1 00:00:00 localhost kernel: Initializing...")
 	_make_file(log, "auth.log", "Jan 1 00:00:01 login: player on tty1")
+	# Генерация 50 лог-файлов (log_00 .. log_49)
+	var secret_index = 23
+	var secret_word = "GHOSTWHALE"
+	for i in range(50):
+		var filename = "log_%02d.txt" % i
+		var content_lines: PackedStringArray = []
+		# Добавляем несколько строк реалистичного лога
+		for line_nr in range(15):
+			var timestamp = "Jan %2d %02d:%02d:%02d" % [(i % 28) + 1, line_nr * 7, i + line_nr, 42]
+			var msg = "localhost service[%d]: event %d (status ok)" % [100 + line_nr, i * 10 + line_nr]
+			content_lines.append(timestamp + " " + msg)
+		# Вставляем секретную строку в один файл после седьмой строки
+		if i == secret_index:
+			content_lines.insert(7, "Jan 15 23:59:59 localhost agent[999]: secret: " + secret_word)
+		_make_file(log, filename, "\n".join(content_lines))
 
 	var share = _make_dir(usr, "share")
 	_make_file(share, "welcome.txt", "Welcome to the system.")

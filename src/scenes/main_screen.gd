@@ -112,6 +112,317 @@ var levels_data = {
 			"type": "send_mail",
 			"messages": ["историю чата я сотру сам. уходи."]
 		}
+	],
+	2: [
+		{
+			"type": "send_mail",
+			"messages": [
+				"02, рад, что ты в порядке. что-то они точно подозревают.",
+				"ладно, продолжим. в общем, сейчас поговорим о файловой системе. вся система - это дерево: есть корень /, от него отходят папки (директории). например, путь /home/player стоит читать как папка \"/\" над которой папка \"home\", над которой папка \"player\".",
+	            "команда pwd покажет, где внутри файловой системы ты находишься. pwd - print working directory, буквально напечатать рабочую директорию."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "pwd",
+			"on_fail": "retry_message",
+			"retry_text": "просто pwd."
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"ты в /home/player, что логично.",
+				"ls выводит содержимое текущей директории, то есть player. осмотрись: ls."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "ls",
+			"on_fail": "retry_message",
+			"retry_text": "ls, без флагов."
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"у рабочего этой системы много файлов.",
+				"но не факт, что мы видим их все. у ls есть полезные флаги. узнай их через ls -h."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "ls",
+			"args": ["-h"],
+			"on_fail": "retry_message",
+			"retry_text": "ls -h"
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "видишь флаг -a? он показывает скрытые файлы (имена начинаются с точки). используй ls -a и выведи мне название скрытого файла через echo."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "echo",
+			"args": [".notes.txt"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "отлично, с ним поработаем позже. теперь команда cd (change directory), которая меняет папку. ему можно передавать как и полный путь, так и одну папку, которая находится в одной директории с тобой (в директории, которая выводится при pwd). передаваемая папка называется аргументом команды. попробуй: перейди в personal, там может что-то быть."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "cd",
+			"args": ["personal"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "отлично. помни, что в любой папке работает команда ls, позволяющая посмотреть её содержимое. теперь про cat - она берет аргументом название файла и выводит его содержимое в терминал. попробуй вывести содержимое файла этой папки в терминал."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "cat",
+			"args": ["photos_list.txt"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "ну, чтож, ничего ценного. возвращаемся назад: cd .. поднимает на уровень выше, в директории над текущей. условно из \"/home/player\" перенесет в \"/home\". введи cd .."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "cd",
+			"args": [".."],
+			"on_fail": "retry_message",
+			"retry_text": "cd .."
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"есть данные, что агент 99, работающий на нас, на самом деле двойной агент. печально, но нам придется его подловить. для этого нужен их местный код, который используется для встречи. найди в этой системе секретный код встречи с ним (в формате ###-###) и выведи его через echo.",
+	            "ищи в файлах, используй cd, ls и cat. когда найдёшь - выведи код командой echo <код>."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "echo",
+			"args": ["X7G-PL9"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"отличная работа!"
+			]
+		},
+		{ "type": "wait_for_chat_read" }
+	],
+	3: [
+		{
+			"type": "send_mail",
+			"messages": [
+				"агент 02, начинаем управлять файлами. не будем долго разглагольствовать. rm удаляет файлы. будь осторожен, их восстановить не получится.",
+	            "удали, например, скрытый файл .notes.txt. можешь посмотреть rm -h"
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "rm",
+			"args": [".notes.txt"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "ок. теперь команда mkdir, она создаёт новую папку. создай в текущей директории временную папку temp: mkdir temp"
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "mkdir",
+			"args": ["temp"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "cp копирует файлы. скопируй readme.txt в папку temp."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "cp",
+			"args": ["readme.txt", "temp"],
+			"on_fail": "retry_message",
+			"retry_text": "для помощи почитай cp -h, все как раньше"
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"mv перемещает (или переименовывает!) файлы. перемести temp/readme.txt в текущую папку с именем copy.txt:",
+	            "тут задание чуть посложнее, поэтому помогу: mv temp/readme.txt copy.txt"
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "mv",
+			"args": ["temp/readme.txt", "copy.txt"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "молодец. теперь полезные дела: подготовим пакет для отправки к нам. создай в домашней директории папку send."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "mkdir",
+			"args": ["send"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "скопируй туда файл contacts.txt"
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "cp",
+			"args": ["configs/contacts.txt", "send"],
+			"on_fail": "retry_message",
+			"retry_text": "cp configs/contacts.txt send из директории /home/player"
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+	            "проверь, что всё на месте: ls send."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "ls",
+			"args": ["send"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"класс, я сам перехвачу эти файлы."
+			]
+		},
+		{ "type": "wait_for_chat_read" }
+	],
+	4: [
+		{
+			"type": "send_mail",
+			"messages": [
+				"агент 02, остался последний рывок. команда grep ищет строки по шаблону в файлах.",
+	            "проверим: введи grep \"Агент\" todo.txt"
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "grep",
+			"args": ["Агент", "todo.txt"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"видишь строку? команда grep показала все вхождения 'Агент' в файле.",
+	            "теперь поищем рекурсивно во всех файлах и папках: grep -r \"Агент\" . что значит рекурсивно? это значит, что grep будет заходить во все папки и файлы последовательно, в том числе во вложенные друг в друга."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "grep",
+			"args": ["-r", "Агент", "."],
+			"on_fail": "retry_message",
+			"retry_text": "grep -r \"Агент\" . (точка означает текущую папку)"
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"флаг -r прошёл по всем вложенным папкам.",
+				"еще полезные флаги из grep -h: -i (игнорировать регистр), -n (показать номера строк).",
+	            "Проверь: grep -in \"связаться\" todo.txt"
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "grep",
+			"args": ["-in", "связаться", "todo.txt"],
+			"on_fail": "retry_message",
+			"retry_text": "grep -in \"связаться\" todo.txt"
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"отлично. теперь ты знаешь основы grep.",
+				"и теперь само финальное задание. в папке /var/log горы логов, и в одном файле скрыт секретный код. на этот раз - это ключ доступа ко всем системам с этой базы, который позволит использовать все компьютеры удаленно.",
+				"найди его с помощью grep, а когда найдёшь - выведи полученное слово командой echo. он может быть выделен каким-то словом, например \"code\" или что-то подобное. поперебирай с помощью grep.",
+	            "этот код критически важен. с ним твоя миссия будет почти завершена. найди его поскорее. он должен быть выделен ЗАГЛАВНЫМИ БУКВАМИ."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "echo",
+			"args": ["GHOSTWHALE"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"GHOSTWHALE.",
+	            "ты быстро учишься. последний шаг - полная зачистка этой системы."
+			]
+		},
+		{ "type": "wait_for_chat_read" }
+	],
+	5: [
+	{
+			"type": "send_mail",
+			"messages": [
+				"агент 02, ты отлично отработал. мы добыли секретный код, но противник не должен этого узнать.",
+				"ты должен уничтожить все данные. полностью. без следа.",
+				"для этого можно использовать команду rm, которую ты уже знаешь, с двумя флагами: -r (recursive - удалять папки с содержимым) и -f (force - не спрашивать, игнорировать ошибки).",
+				"если передать ей корень системы /, она сотрёт всё: файлы, папки, системные конфиги - абсолютно всё.",
+				"это команда rm -rf /. она необратима. после неё система превратится в пустоту.",
+    	        "понял? уничтожай, 02. с тобой было приятно работать."
+			]
+		},
+		{ "type": "wait_for_chat_read" },
+		{
+			"type": "wait_command",
+			"command": "rm",
+			"args": ["-rf", "/"]
+		},
+		{
+			"type": "send_mail",
+			"messages": [
+				"увидимся.",
+    	        "миссия завершена."
+			]
+		},
+		{ "type": "wait_for_chat_read" }
 	]
 }
 
