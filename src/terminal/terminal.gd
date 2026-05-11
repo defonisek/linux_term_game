@@ -132,59 +132,6 @@ func insert_char_at_caret(
 	if should_update:
 		recreate_display_lines_since_last_input_only()
 
-
-
-func invoke_autocompletion() -> void:
-	var line: TerminalLogicalLine = get_active_logical_line()
-	var prompt_len: int = primary_prompt_text.length()
-	var original_input_text: String = line.get_text(prompt_len)
-	var original_caret_pos_x: int = caret_logical_index_x
-
-	if caret_logical_index_x <= prompt_len:
-		return
-
-	# Extract text from end of prompt to caret (ignore right side).
-	var left_text: String = original_input_text.substr(0, caret_logical_index_x - prompt_len)
-	left_text = left_text.strip_edges(true, false)
-
-	# Find the start of the current word.
-	var is_preceded_by_other_words: bool = false
-	var word_start_idx: int = 0
-	for i in range(left_text.length() - 1, -1, -1):
-		var ch: String = left_text[i]
-		if ch == " " or ch == "\t":
-			word_start_idx = i + 1
-			is_preceded_by_other_words = true
-			break
-
-	var current_word: String = left_text.substr(word_start_idx)
-
-	# Only autocomplete the first word (the command name); more advanced autocompletion can be added
-	# by calling custom command-specific methods from the 'TerminalCommands' class.
-	if is_preceded_by_other_words:
-		return
-
-	var commands: Array = _commands.get_available_commands()
-	var matches: Array = []
-
-	for command: String in commands:
-		if command.begins_with(current_word):
-			matches.append(command)
-
-	if matches.is_empty():
-		# No matches: can't autocomplete.
-		pass
-	elif matches.size() == 1:
-		# Single match: autocomplete inline.
-		_autocomplete(current_word, matches[0])
-	else:
-		# Multiple matches: print a list.
-		print_on_terminal(", ".join(matches), default_text_color)
-		_create_new_line_with_prompt()
-		_insert_text_at_caret(original_input_text)
-		caret_logical_index_x = original_caret_pos_x
-		update_caret_position()
-
 func get_font() -> Font:
 	return _font
 
@@ -264,20 +211,6 @@ func _clear_input() -> void:
 	var prompt_length: int = primary_prompt_text.length()
 	active_line.chars.resize(prompt_length)
 	caret_logical_index_x = prompt_length
-
-
-func _autocomplete(incomplete_input: String, complete_input: String) -> void:
-	if not complete_input.begins_with(incomplete_input):
-		push_error(
-			"Terminal: Autocomplete mismatch: complete_input does not start with incomplete_input."
-		)
-		return
-
-	var suffix: String = complete_input.substr(incomplete_input.length())
-
-	# Insert only the missing part at the caret, preserving everything else.
-	for ch: String in suffix:
-		insert_char_at_caret(ch, default_text_color)
 
 
 func _create_display_lines_from_logical_line(logical_line: TerminalLogicalLine) -> void:

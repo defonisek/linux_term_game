@@ -20,8 +20,6 @@ func handle_key_event(event: InputEvent) -> void:
 				_key_backspace()
 			Key.KEY_DELETE:
 				_key_delete()
-			Key.KEY_TAB:
-				_terminal.invoke_autocompletion()
 			_:
 				_insert_printable_character(event)
 

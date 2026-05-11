@@ -19,19 +19,72 @@ func _init():
 	print_tree()
 
 func _build_default_tree():
+	var bin  = _make_dir(root, "bin")
+	var etc  = _make_dir(root, "etc")
 	var home = _make_dir(root, "home")
-	var player_dir = _make_dir(home, "player")
-	_make_file(player_dir, "readme.txt", "Добро пожаловать, игрок!\nИспользуй команды терминала. терминала терминала терминала терминала терминала терминала терминала терминала терминала \n терминала терминала терминала терминала терминалатерминала терминала")
-	var docs = _make_dir(player_dir, "documents")
-	_make_file(docs, "notes.txt", "Заметки: выучить ls и cd.")
-	_make_dir(player_dir, "downloads")
+	var root_dir = _make_dir(root, "root")
+	var tmp  = _make_dir(root, "tmp")
+	var usr  = _make_dir(root, "usr")
+	var var_dir = _make_dir(root, "var")
 
-	var etc = _make_dir(root, "etc")
-	_make_file(etc, "passwd", "root:x:0:0:root:/root:/bin/bash\nplayer:x:1000:1000::/home/player:/bin/sh")
+	var player = _make_dir(home, "player")
+	_make_file(player, "readme.txt",
+		"Добро пожаловать в систему, агент.\nВсе указания в папках reports и configs.")
+	_make_file(player, "todo.txt",
+		"1. Отправить недельный отчёт\n2. Проверить шифрование\n3. Связаться с Агентом 99")
+	_make_file(player, ".notes.txt",
+		"Черновик: вчера видел подозрительного человека у входа. Надо доложить.")
+	_make_file(player, "temp.log",
+		"PID 1234: started\nPID 1235: failed\nPID 1236: ok")
+	_make_file(player, "welcome.txt",
+		"Система готова к работе.\nВерсия 2.1.0")
+	var reports = _make_dir(player, "reports")
+	_make_file(reports, "weekly_report.txt",
+		"Отчёт за прошлую неделю:\nПроверок: 5\nНарушений: 0")
+	_make_file(reports, "daily_log.txt",
+		"Пн: всё чисто\nВт: перебои с питанием\nСр: штатно")
+	_make_file(reports, "incident_04.txt",
+		"Инцидент 04: ложная тревога, датчик сработал на кошку.")
+	var configs = _make_dir(player, "configs")
+	_make_file(configs, "settings.cfg",
+		"volume=80\nbrightness=50\nencryption=on")
+	_make_file(configs, "aliases.sh",
+		"alias ll='ls -l'\nalias la='ls -a'")
+	_make_file(configs, "contacts.txt",
+		"Связной: Агент 99\nКанал: старый склад\nКод доступа: X7G-PL9\nСеанс: пятница 23:00")
+	var data = _make_dir(player, "data")
+	_make_file(data, "metrics.csv",
+		"time,cpu,mem\n00:00,12,34\n00:05,15,40")
+	_make_file(data, "inventory.txt",
+		"Пропуск: 1\nКлюч-карта: 2\nФонарик: 1")
+	_make_file(data, "map.txt",
+		"Карта лежит в верхнем ящике, не потеряй!")
+	var old = _make_dir(player, "old")
+	_make_file(old, "draft1.txt",
+		"Первый вариант плана... (устарел)")
+	_make_file(old, "draft2.txt",
+		"Второй вариант: использовать окно.")
+	_make_file(old, "backup.log",
+		"Бэкап выполнен: 01.01.2026")
 
-	var usr = _make_dir(root, "usr")
-	var bin = _make_dir(usr, "bin")
-	_make_file(bin, "placeholder", "")
+	var personal = _make_dir(player, "personal")
+	_make_file(personal, "photos_list.txt",
+		"папка с фотографиями удалена для безопасности.")
+	_make_file(etc, "hostname", "secret-lab-34")
+	_make_file(etc, "passwd",
+		"root:x:0:0:root:/root:/bin/bash\nplayer:x:1000:1000::/home/player:/bin/sh")
+
+
+	var log = _make_dir(var_dir, "log")
+	_make_file(log, "syslog", "Jan 1 00:00:00 localhost kernel: Initializing...")
+	_make_file(log, "auth.log", "Jan 1 00:00:01 login: player on tty1")
+
+	var share = _make_dir(usr, "share")
+	_make_file(share, "welcome.txt", "Welcome to the system.")
+	_make_file(share, "motd", "Message of the Day: Ask not for whom the bell tolls.")
+	_make_dir(usr, "bin")
+	_make_dir(usr, "lib")
+	_make_dir(tmp, "backups")
 
 func _make_dir(parent: VFSNode, name: String) -> VFSNode:
 	assert(parent.is_dir, "Нельзя создать подкаталог в файле")
