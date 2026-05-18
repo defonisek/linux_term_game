@@ -91,22 +91,6 @@ func _register_commands() -> void:
 	_register_command(cmd_obj)
 
 	cmd_obj = TerminalCommand.new()
-	cmd_obj.name = "hello"
-	cmd_obj.description = "Greet the user."
-	cmd_obj.callable = _cmd_hello
-	cmd_obj.schema = TerminalCommandSchema.new()
-	cmd_obj.schema.add_positional("name", "The name of the user.")
-	cmd_obj.schema.add_positional("greeting", "The greeting to use.", "Hello")
-	cmd_obj.schema.add_option(
-		"uppercase",
-		"u",
-		"Print in uppercase.",
-		false,
-		TerminalArguments.OptionType.FLAG
-	)
-	_register_command(cmd_obj)
-	
-	cmd_obj = TerminalCommand.new()
 	cmd_obj.name = "whoami"
 	cmd_obj.description = "Print the current user name."
 	cmd_obj.callable = _cmd_whoami
@@ -329,18 +313,7 @@ func _cmd_help() -> void:
 	command_finished.emit()
 
 
-# Just to demonstrate options and positionals.
-func _cmd_hello() -> void:
-	var name_to_greet: String = _parsed_args.positionals[0]
-	var greeting: String = _parsed_args.positionals[1]
-	var output: String = "%s, %s!" % [greeting, name_to_greet]
-	if _parsed_args.has_flag("uppercase"):
-		output = output.to_upper()
-	_terminal.print_on_terminal(output)
-	command_finished.emit()
-	
 func _cmd_whoami() -> void:
-	# Возможно добавится способ ввести свой username
 	var user = ""
 	if user == "":
 		user = "player"
@@ -359,6 +332,7 @@ func _cmd_date() -> void:
 	command_finished.emit()
 	
 func _cmd_cd() -> void:
+	var start = Time.get_ticks_usec()
 	if _parsed_args.positionals.size() != 1:
 		_terminal.print_on_terminal("cd: missing operand", Color.RED)
 		command_finished.emit()
@@ -370,8 +344,11 @@ func _cmd_cd() -> void:
 	else:
 		_terminal.cwd = new_pwd
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("cd выполнено за ", elapsed, " мкс")
 
 func _cmd_ls() -> void:
+	var start = Time.get_ticks_usec()
 	var show_all = _parsed_args.has_flag("all")
 	var long_format = _parsed_args.has_flag("long")
 	var target = _parsed_args.positionals[0]
@@ -396,6 +373,8 @@ func _cmd_ls() -> void:
 		_terminal.print_on_terminal(target)
 
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("ls выполнено за ", elapsed, " мкс")
 
 func _cmd_pwd() -> void:
 	_terminal.print_on_terminal(_terminal.cwd)
@@ -406,6 +385,7 @@ func _cmd_hostname() -> void:
 	command_finished.emit()
 
 func _cmd_mkdir() -> void:
+	var start = Time.get_ticks_usec()
 	var target = _parsed_args.positionals[0]
 	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
 	var parent_path = _terminal.file_system._parent_path(abs_target)
@@ -419,8 +399,11 @@ func _cmd_mkdir() -> void:
 	else:
 		_terminal.file_system._make_dir(parent, name)
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("mkdir выполнено за ", elapsed, " мкс")
 
 func _cmd_cat() -> void:
+	var start = Time.get_ticks_usec()
 	var target = _parsed_args.positionals[0]
 	var abs_target = _terminal.file_system.resolve(target, _terminal.cwd)
 	var node = _terminal.file_system.get_node(abs_target)
@@ -431,9 +414,12 @@ func _cmd_cat() -> void:
 	else:
 		_terminal.print_on_terminal(node.content)
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("cat выполнено за ", elapsed, " мкс")
 
 
 func _cmd_cp() -> void:
+	var start = Time.get_ticks_usec()
 	var src = _parsed_args.positionals[0]
 	var dest = _parsed_args.positionals[1]
 	var abs_src = _terminal.file_system.resolve(src, _terminal.cwd)
@@ -448,8 +434,11 @@ func _cmd_cp() -> void:
 	else:
 		_terminal.print_on_terminal("cp: cannot copy: operation failed", Color.RED)
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("cp выполнено за ", elapsed, " мкс")
 
 func _cmd_mv() -> void:
+	var start = Time.get_ticks_usec()
 	var src = _parsed_args.positionals[0]
 	var dest = _parsed_args.positionals[1]
 	var abs_src = _terminal.file_system.resolve(src, _terminal.cwd)
@@ -463,9 +452,12 @@ func _cmd_mv() -> void:
 	else:
 		_terminal.print_on_terminal("mv: cannot move: operation failed", Color.RED)
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("mv выполнено за ", elapsed, " мкс")
 
 	
 func _cmd_rm() -> void:
+	var start = Time.get_ticks_usec()
 	var recursive = _parsed_args.has_flag("recursive")
 	var force     = _parsed_args.has_flag("force")
 	var target    = _parsed_args.positionals[0]
@@ -502,6 +494,8 @@ func _cmd_rm() -> void:
 				Color.RED
 			)
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("rm выполнено за ", elapsed, " мкс")
 	
 func _perform_rm_rf_root() -> void:
 	var file_system = _terminal.file_system
@@ -533,6 +527,7 @@ func _collect_all_paths(node: VirtualFileSystem.VFSNode, current_path: String, o
 
 
 func _cmd_grep() -> void:
+	var start = Time.get_ticks_usec()
 	var pattern = _parsed_args.positionals[0]
 	var target = _parsed_args.positionals[1]
 	var recursive = _parsed_args.has_flag("recursive")
@@ -581,3 +576,5 @@ func _cmd_grep() -> void:
 		# grep ничего не выводит, если ничего не найдено
 		pass
 	command_finished.emit()
+	var elapsed = Time.get_ticks_usec() - start
+	print("grep выполнено за ", elapsed, " мкс")
